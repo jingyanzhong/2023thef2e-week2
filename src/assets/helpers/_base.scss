@@ -1,7 +1,50 @@
 #app {
     font-family: 'Noto Serif TC', serif;
+    background: linear-gradient(140deg, rgba(43, 88, 118, 1), rgba(78, 67, 118, 1));
+    min-height: 100vh;
 }
+
 .container {
     max-width: 1736px;
     margin: 0 auto;
+}
+
+a {
+    text-decoration: none;
+}
+
+img {
+    display: block;
+    margin: 100%;
+    height: auto;
+}
+
+.btn-outline-white {
+    width: 255px;
+    border: 3px solid #fff;
+    border-radius: 16px;
+    color: #fff;
+    font-size: 24px;
+    padding: 16px 0;
+    margin-bottom: 24px;
+    transition: all .5s;
+    &:hover, &.active {
+        border: 3px solid #fff;
+        background: #fff;
+        color: rgba(78, 67, 118, 1);
+    }
+}
+.mr-40 {
+    margin-right: 40px;
+}
+.show {
+    display: block;
+}
+.none{
+    display: none;
+}
+@media(max-width: 767px) {
+    .moblie-none {
+        display: none;
+    }
 }
