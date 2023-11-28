@@ -1,122 +1,478 @@
 <script setup>
-import { ref } from 'vue'
+import * as d3 from 'd3'
+import { ref, onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import HeaderComponent from './components/HeaderComponent.vue'
-const searchValue = ref('all')
-const county = ref('縣市')
-const countyShow = ref(false)
-const town = ref('鄉鎮')
-const townShow = ref(false)
-function searchContentShow (val) {
-  if (val === 'county') {
-    countyShow.value = !countyShow.value
-    townShow.value = false
-  } else if (val === 'town') {
-    townShow.value = !townShow.value
-    countyShow.value = false
+import SearchComponent from './components/searchComponent.vue'
+onMounted(() => {
+  getData()
+  window.onresize = () => {
+    drawPieChart()
+    drawBarChart()
   }
+})
+const allData = ref([])
+const data = ref([])
+// 圓餅圖
+// 1.取得data
+async function getData () {
+  const csvData = await d3.csv('./totalData.csv')
+  allData.value = csvData
+  console.log(allData.value)
+  data.value.push(100 - parseInt(csvData[0]['投票率']))
+  data.value.push(parseInt(csvData[0]['投票率']))
+  console.log(data.value)
+  drawPieChart()
+  drawBarChart()
 }
-function searchChange (val) {
-  if (val === 'all') {
-    searchValue.value = 'all'
-    county.value = '縣市'
-    town.value = '鄉鎮'
-    countyShow.value = false
-    townShow.value = false
-  } else if (val === 'county') {
-    countyShow.value = false
-    searchValue.value = ''
-  } else if (val === 'town') {
-    townShow.value = false
+// 2.畫圓餅圖
+function drawPieChart () {
+  d3.select('.pieChart svg').remove()
+  const svgWidth = parseInt(d3.select('.pieChart').style('width')) / 2
+  const svgHeight = svgWidth * 0.8
+  // const margin = 60
+  const svg = d3.select('.pieChart').append('svg')
+    .attr('width', svgWidth)
+    .attr('height', svgHeight)
+  svg.append('g')
+    .attr('class', 'slices')
+    .attr('transform', `translate(${svgWidth / 2}, ${svgHeight / 2})`)
+  // 設定顏色
+  const color = d3.scaleOrdinal()
+    .range(['#635692', '#4e4376'])
+  const radius = Math.min(svgWidth, svgHeight) / 2
+
+  // 設定每個資料在圓餅圖上:
+  const piechart = d3.pie()
+    .value(d => d)
+
+  // innerRadius 跟 outerRadius 決定圓餅內圈外圈的大小 radius
+  const arc = d3.arc()
+    .innerRadius(0)
+    .outerRadius(radius)
+  // .startAngle(20)
+  // .endAngle(d => {
+  //   console.log(d)
+  //   return d.data + 20
+  // })
+  const outerArc = d3.arc()
+    .outerRadius(radius * 0.9)
+    .innerRadius(radius * 0.9)
+  const data_ready = piechart(data.value)
+  // 建立pie
+  const cutePie = svg.select('.slices')
+    .selectAll('g')
+    .data(data_ready)
+    .enter()
+    .append('g')
+    .attr('class', 'arc')
+
+  cutePie.append('path')
+    .attr('d', arc)
+    .attr('fill', color)
+    .style('opacity', 1)
+}
+
+// 3.複數長條圖
+function drawBarChart () {
+  d3.select('.bar svg').remove()
+  d3.select('.bar').style('position', 'relative')
+  // 設定rwd寬高
+  const svgW = parseInt(d3.select('.bar').style('width'))
+  const svgH = parseInt(d3.select('.bar').style('height'))
+  const margin = 35
+  const marginB = 40
+  const svg = d3.select('.bar').append('svg')
+    .attr('width', svgW)
+    .attr('height', svgH)
+
+  // 製作XY軸
+  // 1.去除總計項目
+  const dataFilter = allData.value.filter((i) => {
+    if (i['行政區別'] !== '總　計') {
+      return i
+    }
+  })
+  const xData = dataFilter.map(i => (i['行政區別']).trim())
+  const xScale = d3.scaleBand()
+    .domain(xData)
+    .range([(margin * 2), (svgW - margin)])
+    .padding(0.05)
+  const xAxis = d3.axisBottom(xScale)
+  const xAxisGroup = svg.append('g')
+    .call(xAxis)
+    .attr('transform', `translate(0, ${svgH - marginB})`)
+    .attr('color', '#fff')
+  const yData = dataFilter.map(i => parseInt(i['(3)蔡英文_賴清德'].split(',').join('')))
+  console.log(d3.max(yData))
+  const yScale = d3.scaleLinear()
+    .domain([0, d3.max(yData)])
+    .range([svgH - marginB, margin])
+    .nice()
+  const yAxis = d3.axisLeft(yScale).ticks(7)
+  const yAxisGroup = svg.append('g').call(yAxis)
+    .attr('transform', `translate(${margin * 2}, 0)`)
+    .attr('color', '#fff')
+  const subgroups = Object.keys(allData.value[0]).slice(1)
+  const subgroupsFilter = subgroups.filter(i => {
+    if (i === '(1)宋楚瑜_余湘' || i === '(2)韓國瑜_張善政' || i === '(3)蔡英文_賴清德') {
+      return i
+    }
+  })
+  console.log(subgroupsFilter)
+  const xSubgroups = d3.scaleBand()
+    .domain(subgroupsFilter)
+    .range([0, xScale.bandwidth()])
+    .padding([0.1])
+  const color = d3.scaleOrdinal()
+    .domain(subgroupsFilter)
+    .range(['#B4A073', '#08C0BE', '#E756B8'])
+  const bar = svg.append('g')
+    .selectAll('g')
+    .data(dataFilter)
+    .join('g')
+    .attr('transform', d => `translate(${xScale(d['行政區別'].trim())}, 0)`)
+
+  bar.selectAll('rect')
+    .data(d => {
+      //   console.log(d)
+      return subgroupsFilter.map(i => {
+        return { key: i, value: d[i] }
+      })
+    })
+    .join('rect')
+    .attr('x', d => xSubgroups(d.key))
+    .attr('y', d => yScale(d.value.split(',').join('')))
+    .attr('width', xSubgroups.bandwidth())
+    .attr('height', d => {
+      return (svgH - marginB) - yScale(parseInt(d.value.split(',').join('')))
+    })
+    .attr('fill', d => color(d.key))
+    .style('cursor', 'pointer')
+
+  const text = d3.selectAll('text')
+    .style('font-size', '14px')
+  // 新增tooltips
+  const tooltips = d3.select('.barChart').append('div')
+    .attr('class', 'tooltip')
+    .style('position', 'absolute')
+    .style('visibility', 'hidden') // 一開始tooltips是隱藏的
+    .style('background-color', 'rgba(78, 67, 118, 1)')
+    .style('color', '#fff')
+    .style('padding', '12px 16px')
+  bar.on('mouseover', handleMouseOver)
+    .on('mouseleave', handleMouseLeave)
+
+  function handleMouseOver (d, i) {
+    tooltips.style('visibility', 'visible')
+      .style('bottom', 100 + 'px')
+      .style('left', xScale(i['行政區別'].trim()) - 40 + 'px')
+      .html(`<p>${i['行政區別'].trim()}得票數</p>
+             <p>A候選人　　${i['(1)宋楚瑜_余湘']}票</p>
+             <p>B候選人　　${i['(2)韓國瑜_張善政']}票</p>
+             <p>C候選人　　${i['(3)蔡英文_賴清德']}票</p>
+            `)
+    d3.selectAll('.tooltip p')
+      .style('font-size', '14px')
+      .style('margin', '4px')
+  }
+
+  function handleMouseLeave () {
+    // 移除文字
+    d3.select('.tooltip').style('visibility', 'hidden')
   }
 }
 </script>
 
 <template>
-  <!-- <RouterLink to="/">首頁</RouterLink> -->
-  <HeaderComponent></HeaderComponent>
-  <main>
-    <div class="container">
-      <div class="search d-flex">
-        <button type="button" class="btn btn-outline-white mr-40" :class="{ 'active': searchValue === 'all' }"
-          @click="searchChange('all')">全國</button>
-          <div class="countyBox">
-            <button type="button" class="county btn btn-outline-white mr-40"
-              @click="searchContentShow('county')">{{ county }}</button>
-            <div class="countyBtnContent" :class="{ 'show': countyShow === true, 'none': countyShow === false }">
-              <label @click="searchChange('county')">
-                <input type="radio" name="county" value="台北市" v-model="county">
-                <span>台北市</span>
-              </label>
-              <label @click="searchChange('county')">
-                <input type="radio" name="county" value="新北市" v-model="county">
-                <span>新北市</span>
-              </label>
+  <div class="wrap">
+    <!-- <RouterLink to="/">首頁</RouterLink> -->
+    <HeaderComponent></HeaderComponent>
+    <main>
+      <div class="container">
+        <SearchComponent></SearchComponent>
+        <div class="stackBar"></div>
+        <div class="chart">
+          <div class="chartContent">
+            <div class="icon">
+              <p>WE LOVE TW</p>
+              <img src="./img/icon2.png" alt="星球">
+            </div>
+            <div class="pie">
+              <h4>選舉概況</h4>
+              <div class="pieChart">
+                <div class="pieText">
+                  <div class="title">
+                    <p>投票率</p>
+                    <p>投票數</p>
+                    <p>有效票數</p>
+                    <p>無效票數</p>
+                  </div>
+                  <div class="value">
+                    <!-- <p>{{ allData[0]['投票率'] }}</p>
+                    <p>{{ allData[0]['投票數'] }}</p>
+                    <p>{{ allData[0]['有效票數'] }}</p>
+                    <p>{{ allData[0]['無效票數'] }}</p> -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="barChart">
+              <div class="barTag">
+                <div class="tag"><img src="./img/01.png" alt="">新世代改革黨</div>
+                <div class="tag"><img src="./img/02.png" alt="">未來前進黨</div>
+                <div class="tag"><img src="./img/03.png" alt="">星際和平黨</div>
+              </div>
+              <h4>各縣市政黨得票數</h4>
+              <div class="barScroll">
+                <div class="bar"></div>
+              </div>
             </div>
           </div>
-          <div class="townBox">
-            <button type="button" class="town btn btn-outline-white mr-40" @click="searchContentShow('town')">{{ town }}</button>
-            <div class="townBtnContent" :class="{ 'show': townShow === true, 'none': townShow === false }">
-              <label @click="searchChange('town')">
-                <input type="radio" name="town" value="中正區" v-model="town">
-                <span>中正區</span>
-              </label>
-              <label @click="searchChange('town')">
-                <input type="radio" name="town" value="大安區" v-model="town">
-                <span>大安區</span>
-              </label>
-            </div>
+          <div class="taiwanMap">
+            <img src="./img/taiwan.png" alt="台灣">
           </div>
-        <input type="search" class="searchText btn btn-outline-white mr-40" placeholder="找地區">
+        </div>
+        <div class="hr"></div>
+        <div class="barChart2"></div>
       </div>
-    </div>
-  </main>
-  <!-- <RouterView /> -->
+    </main>
+    <!-- <RouterView /> -->
+  </div>
 </template>
 
 <style lang="scss" scoped>
-.search {
+.hr {
+  width: 100%;
+  height: 1px;
+  background: #fff;
+  margin-top: 64px;
+  margin-bottom: 40px;
+}
+
+.barChart2 {
+  width: 100%;
+  height: 500px;
+}
+
+.stackBar {
+  height: 64px;
+  width: 100%;
+  background: rgba(8, 192, 190, 1);
+  margin-bottom: 74px;
+}
+
+.chart {
+  width: 100%;
+  display: flex;
+}
+
+.chartContent {
+  width: 65%;
+  // max-height: 342px;
+  display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-}
-.countyBox, .townBox {
-  max-width: 255px;
-  width: 100%;
-  margin-right: 40px;
-  position: relative;
-}
-.countyBtnContent,
-.townBtnContent {
-  max-width: 255px;
-  width: 100%;
-  border: 3px solid #fff;
-  border-radius: 16px;
-  color: #fff;
-  background: rgba(78, 67, 118, 1);
-  font-size: 24px;
-  padding: 16px 0;
-  position: absolute;
-  top: 80px;
-  left: 0;
-  z-index: 5;
-  input {
-    display: none;
+
+  .icon {
+    margin-right: 200px;
+
+    p {
+      font-size: 32px;
+      font-family: 'Noto Sans TC', sans-serif;
+      color: rgba(255, 255, 255, 0.2);
+    }
+
+    img {
+      width: 230px;
+      margin: 0;
+    }
   }
 
-  label {
-    display: block;
-    text-align: center;
-    padding: 8px 0;
-    cursor: pointer;
-    transition: all .5s;
+  .pie {
+    width: 55%;
 
-    &:hover {
-      background: rgba(255, 255, 255, .5);
+    h4 {
+      font-size: 32px;
+      color: #fff;
+      margin-bottom: 40px;
+    }
+
+    .pieChart {
+      width: 100%;
+      display: flex;
+      align-items: center;
+
+      .pieText {
+        order: 2;
+        display: flex;
+        color: #fff;
+
+        p {
+          margin: 8px;
+        }
+      }
     }
   }
 }
-.searchText {
-  width: calc(100% - (255px * 3 + 160px));
-  min-width: 255px;
+
+@media(max-width: 768px) {
+  .chartContent {
+    .icon {
+      display: none;
+    }
+
+    .pie {
+      width: 100%;
+      margin-bottom: 24px;
+    }
+  }
 }
-</style>
+
+.barChart {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+
+  h4 {
+    display: flex;
+    align-items: end;
+    color: #fff;
+    font-size: 32px;
+    margin: 0;
+  }
+
+  .barTag {
+    max-width: 170px;
+    width: 100%;
+    margin-right: 75px;
+
+    img {
+      display: inline;
+      margin: 0;
+      margin-right: 8px;
+    }
+
+    .tag {
+      display: flex;
+      align-items: center;
+      height: 40px;
+      color: #fff;
+      margin-bottom: 8px;
+      font-size: 20px;
+      padding: 8px;
+
+      &:nth-of-type(1) {
+        background: linear-gradient(86.18deg, #08C0BE 1.78%, rgba(200, 240, 240, 0) 122.05%);
+      }
+
+      &:nth-of-type(2) {
+        background: linear-gradient(86.8deg, #C857A3 2.93%, rgba(188, 143, 174, 0) 191.01%);
+      }
+
+      &:nth-of-type(3) {
+        background: linear-gradient(89.28deg, #AD8427 0.74%, rgba(252, 238, 207, 0) 162.36%);
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .barScroll {
+    width: 100%;
+    overflow-x: auto;
+
+    &::-webkit-scrollbar {
+
+      width: 7px;
+
+    }
+
+    &::-webkit-scrollbar-button {
+
+      background: transparent;
+
+      border-radius: 4px;
+
+    }
+
+    &::-webkit-scrollbar-track-piece {
+
+      background: rgba(217, 217, 217, 1);
+      border-radius: 8px;
+
+    }
+
+    &::-webkit-scrollbar-thumb {
+
+      border-radius: 16px;
+      background-color: rgba(78, 67, 118, 1);
+      position: relative;
+
+      // border: 1px solid slategrey;
+
+    }
+
+    &::-webkit-scrollbar-track {
+
+      box-shadow: transparent;
+
+    }
+  }
+
+  .bar {
+    width: 200%;
+    height: 312px;
+  }
+}
+
+.taiwanMap {
+  width: 35%;
+
+  img {
+    width: 100%;
+    max-width: 552px;
+    margin: 0;
+  }
+}
+
+@media(max-width: 768px) {
+  .barChart {
+    .bar {
+      width: 300%;
+      height: 312px;
+    }
+
+    .barTag {
+      margin-right: 48px;
+    }
+  }
+}
+
+@media(max-width: 767px) {
+  .barChart {
+    justify-content: center;
+    h4 {
+      margin-top: 24px;
+    }
+  }
+  .taiwanMap {
+    display: none;
+  }
+
+  .chartContent {
+    width: 100%;
+
+    .pie {
+      h4 {
+        text-align: center;
+      }
+
+      .pieChart {
+        flex-direction: column;
+
+        .pieText {
+          margin-top: 16px;
+        }
+      }
+    }
+  }
+}</style>

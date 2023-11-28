@@ -1,7 +1,9 @@
-#app {
+.wrap {
     font-family: 'Noto Serif TC', serif;
-    background: linear-gradient(140deg, rgba(43, 88, 118, 1), rgba(78, 67, 118, 1));
+    width: 100%;
     min-height: 100vh;
+    height: 100%;
+    background: linear-gradient(140deg, rgba(43, 88, 118, 1), rgba(78, 67, 118, 1)) no-repeat;
 }
 
 .container {
@@ -28,23 +30,43 @@ img {
     padding: 16px 0;
     margin-bottom: 24px;
     transition: all .5s;
-    &:hover, &.active {
+
+    &:hover,
+    &.active {
         border: 3px solid #fff;
         background: #fff;
         color: rgba(78, 67, 118, 1);
     }
 }
+
 .mr-40 {
     margin-right: 40px;
 }
+
 .show {
     display: block;
 }
-.none{
+
+.none {
     display: none;
 }
+
+@media(max-width: 768px) {
+
+}
+
 @media(max-width: 767px) {
     .moblie-none {
         display: none;
+    }
+    .btn-outline-white {
+        border: 1px solid #fff;
+        font-size: 16px;
+        padding: 16px 0;
+        margin-bottom: 16px;
+        &:hover,
+        &.active {
+            border: 1px solid #fff;
+        }
     }
 }
