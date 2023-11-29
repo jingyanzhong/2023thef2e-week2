@@ -191,7 +191,17 @@ function drawBarChart () {
     <main>
       <div class="container">
         <SearchComponent></SearchComponent>
-        <div class="stackBar"></div>
+        <div class="stackBar">
+          <div class="barBox">
+            <span>朱筱雀/劉貝<br>7,111,222票</span>
+          </div>
+          <div class="barBox">
+            <span>顏青龍/張妃<br>5,111,222票</span>
+          </div>
+          <div class="barBox">
+            <span>卓白虎/官瑜<br>508,555票</span>
+          </div>
+        </div>
         <div class="chart">
           <div class="chartContent">
             <div class="icon">
@@ -209,10 +219,10 @@ function drawBarChart () {
                     <p>無效票數</p>
                   </div>
                   <div class="value">
-                    <!-- <p>{{ allData[0]['投票率'] }}</p>
-                    <p>{{ allData[0]['投票數'] }}</p>
-                    <p>{{ allData[0]['有效票數'] }}</p>
-                    <p>{{ allData[0]['無效票數'] }}</p> -->
+                    <p>74.9029 %</p>
+                    <p>14,464,571</p>
+                    <p>14,300,940</p>
+                    <p>163,631</p>
                   </div>
                 </div>
               </div>
@@ -256,10 +266,26 @@ function drawBarChart () {
 }
 
 .stackBar {
+  display: flex;
   height: 64px;
   width: 100%;
-  background: rgba(8, 192, 190, 1);
   margin-bottom: 74px;
+  .barBox {
+    padding: 8px;
+    color: #fff;
+    &:nth-of-type(1) {
+      width: 40%;
+      background: linear-gradient(86.8deg, #C857A3 2.93%, rgba(188, 143, 174, 0) 191.01%);
+    }
+    &:nth-of-type(2) {
+      width: 35%;
+      background: linear-gradient(86.18deg, #08C0BE 1.78%, rgba(200, 240, 240, 0) 122.05%);
+    }
+    &:nth-of-type(3) {
+      width: 25%;
+      background: linear-gradient(89.28deg, #AD8427 0.74%, rgba(252, 238, 207, 0) 162.36%);
+    }
+  }
 }
 
 .chart {
