@@ -1,7 +1,6 @@
 <script setup>
 import * as d3 from 'd3'
 import { ref, onMounted } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
 import HeaderComponent from './components/HeaderComponent.vue'
 import SearchComponent from './components/searchComponent.vue'
 onMounted(() => {
@@ -12,20 +11,31 @@ onMounted(() => {
     drawVoteBarChart()
   }
 })
+const year = ref(2020)
+const textContent = ref({})
+function getEmit (text) {
+  year.value = text
+  getData()
+}
 const allData = ref([])
 const data = ref([])
 const voteRate = ref([])
 // 圓餅圖
 // 1.取得data
 async function getData () {
-  const csvData = await d3.csv('./totalData.csv')
-  const voteRateData = await d3.csv('./voteRate.csv')
+  data.value = []
+  const csvData = await d3.csv(`/${year.value}totalData.csv`)
+  const voteRateData = await d3.csv('/voteRate.csv')
   allData.value = csvData
   voteRate.value = voteRateData
-  console.log(voteRate.value)
   data.value.push(100 - parseInt(csvData[0]['投票率']))
   data.value.push(parseInt(csvData[0]['投票率']))
-  console.log(data.value)
+  textContent.value = {
+    voteRate: csvData[0]['投票率'],
+    voteTotal: csvData[0]['投票數'],
+    valid: csvData[0]['有效票數'],
+    invalid: csvData[0]['無效票數']
+  }
   drawPieChart()
   drawBarChart()
   drawVoteBarChart()
@@ -55,11 +65,6 @@ function drawPieChart () {
   const arc = d3.arc()
     .innerRadius(0)
     .outerRadius(radius)
-  // .startAngle(20)
-  // .endAngle(d => {
-  //   console.log(d)
-  //   return d.data + 20
-  // })
   const outerArc = d3.arc()
     .outerRadius(radius * 0.9)
     .innerRadius(radius * 0.9)
@@ -108,8 +113,12 @@ function drawBarChart () {
     .call(xAxis)
     .attr('transform', `translate(0, ${svgH - marginB})`)
     .attr('color', '#fff')
-  const yData = dataFilter.map(i => parseInt(i['(3)蔡英文_賴清德'].split(',').join('')))
-  console.log(d3.max(yData))
+  const yData = []
+  dataFilter.forEach(item => {
+    yData.push(parseInt(item.no1.split(',').join('')))
+    yData.push(parseInt(item.no2.split(',').join('')))
+    yData.push(parseInt(item.no3.split(',').join('')))
+  })
   const yScale = d3.scaleLinear()
     .domain([0, d3.max(yData)])
     .range([svgH - marginB, margin])
@@ -120,11 +129,10 @@ function drawBarChart () {
     .attr('color', '#fff')
   const subgroups = Object.keys(allData.value[0]).slice(1)
   const subgroupsFilter = subgroups.filter(i => {
-    if (i === '(1)宋楚瑜_余湘' || i === '(2)韓國瑜_張善政' || i === '(3)蔡英文_賴清德') {
+    if (i === 'no1' || i === 'no2' || i === 'no3') {
       return i
     }
   })
-  console.log(subgroupsFilter)
   const xSubgroups = d3.scaleBand()
     .domain(subgroupsFilter)
     .range([0, xScale.bandwidth()])
@@ -140,7 +148,6 @@ function drawBarChart () {
 
   bar.selectAll('rect')
     .data(d => {
-      //   console.log(d)
       return subgroupsFilter.map(i => {
         return { key: i, value: d[i] }
       })
@@ -173,9 +180,9 @@ function drawBarChart () {
       .style('bottom', 100 + 'px')
       .style('left', xScale(i['行政區別'].trim()) - 40 + 'px')
       .html(`<p>${i['行政區別'].trim()}得票數</p>
-             <p>A候選人　　${i['(1)宋楚瑜_余湘']}票</p>
-             <p>B候選人　　${i['(2)韓國瑜_張善政']}票</p>
-             <p>C候選人　　${i['(3)蔡英文_賴清德']}票</p>
+             <p>A候選人　　${i['宋楚瑜/余湘']}票</p>
+             <p>B候選人　　${i['韓國瑜/張善政']}票</p>
+             <p>C候選人　　${i['蔡英文/賴清德']}票</p>
             `)
     d3.selectAll('.tooltip p')
       .style('font-size', '14px')
@@ -223,7 +230,6 @@ function drawVoteBarChart () {
     .attr('transform', `translate(${margin * 2}, 0)`)
     .attr('color', '#fff')
   const subgroups = Object.keys(voteRate.value[0]).slice(1)
-  console.log(subgroups)
   const xSubgroups = d3.scaleBand()
     .domain(subgroups)
     .range([0, xScale.bandwidth()])
@@ -239,7 +245,6 @@ function drawVoteBarChart () {
 
   bar.selectAll('rect')
     .data(d => {
-      //   console.log(d)
       return subgroups.map(i => {
         return { key: i, value: d[i] }
       })
@@ -249,7 +254,6 @@ function drawVoteBarChart () {
     .attr('y', d => yScale(d.value.split(',').join('')))
     .attr('width', xSubgroups.bandwidth())
     .attr('height', d => {
-      console.log(yScale(parseInt(d.value)))
       return (svgH - marginB) - yScale(parseInt(d.value))
     })
     .attr('fill', d => color(d.key))
@@ -273,9 +277,9 @@ function drawVoteBarChart () {
       .style('bottom', 100 + 'px')
       .style('left', xScale(i['行政區別'].trim()) - 40 + 'px')
       .html(`<p>${i['行政區別'].trim()}得票數</p>
-             <p>A候選人　　${i['(1)宋楚瑜_余湘']}票</p>
-             <p>B候選人　　${i['(2)韓國瑜_張善政']}票</p>
-             <p>C候選人　　${i['(3)蔡英文_賴清德']}票</p>
+             <p>A候選人　　${i['宋楚瑜/余湘']}票</p>
+             <p>B候選人　　${i['韓國瑜/張善政']}票</p>
+             <p>C候選人　　${i['蔡英文/賴清德']}票</p>
             `)
     d3.selectAll('.tooltip p')
       .style('font-size', '14px')
@@ -292,7 +296,7 @@ function drawVoteBarChart () {
 <template>
   <div class="wrap">
     <!-- <RouterLink to="/">首頁</RouterLink> -->
-    <HeaderComponent></HeaderComponent>
+    <HeaderComponent @get-year="getEmit"></HeaderComponent>
     <main>
       <div class="container">
         <SearchComponent></SearchComponent>
@@ -324,10 +328,10 @@ function drawVoteBarChart () {
                     <p>無效票數</p>
                   </div>
                   <div class="value">
-                    <p>74.9029 %</p>
-                    <p>14,464,571</p>
-                    <p>14,300,940</p>
-                    <p>163,631</p>
+                    <p>{{textContent.voteRate}} %</p>
+                    <p>{{textContent.voteTotal}}</p>
+                    <p>{{textContent.valid}}</p>
+                    <p>{{textContent.invalid}}</p>
                   </div>
                 </div>
               </div>

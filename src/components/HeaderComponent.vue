@@ -1,6 +1,13 @@
 <script setup>
-import { ref } from 'vue'
-const text = ref('15')
+import { ref, defineEmits } from 'vue'
+const text = ref(15)
+const year = ref(2020)
+const emit = defineEmits(['get-year'])
+function yearEmits (t, y) {
+  text.value = t
+  year.value = y
+  emit('get-year', y)
+}
 </script>
 
 <template>
@@ -13,25 +20,25 @@ const text = ref('15')
             </h1>
             <nav class="position-relative">
                 <div class="line bg-primary"></div>
-                <a href="#" class="circle circle1 active position-absolute" @click="text = '15'">
+                <a href="#" class="circle circle1 active position-absolute" @click="yearEmits(15, 2020)">
                     <div class="text position-absolute d-flex">
                         <span>2020</span>
                         <span class="text-m active-none moblie-none"
-                            :class="{ 'active-show': text === '15' }">第15任總統副總選舉</span>
+                            :class="{ 'active-show': text === 15 }">第15任總統副總選舉</span>
                     </div>
                 </a>
-                <a href="#" class="circle circle2 position-absolute start-50" @click="text = '14'">
+                <a href="#" class="circle circle2 position-absolute start-50" @click="yearEmits(14, 2016)">
                     <div class="text position-absolute d-flex">
                         <span>2016</span>
                         <span class="text-m active-none moblie-none"
-                            :class="{ 'active-show': text === '14' }">第14任總統副總選舉</span>
+                            :class="{ 'active-show': text === 14 }">第14任總統副總選舉</span>
                     </div>
                 </a>
-                <a href="#" class="circle circle3 position-absolute" @click="text = '13'">
+                <a href="#" class="circle circle3 position-absolute" @click="text=13">
                     <div class="text position-absolute d-flex">
                         <span>2012</span>
                         <span class="text-m active-none moblie-none"
-                            :class="{ 'active-show': text === '13' }">第13任總統副總選舉</span>
+                            :class="{ 'active-show': text === 13 }">第13任總統副總選舉</span>
                     </div>
                 </a>
                 <div class="moblie-text">
