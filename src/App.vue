@@ -86,6 +86,7 @@ function drawPieChart () {
 // 3.複數長條圖
 function drawBarChart () {
   d3.select('.bar svg').remove()
+  d3.select('.bar .tooltips').remove()
   d3.select('.bar').style('position', 'relative')
   // 設定rwd寬高
   const svgW = parseInt(d3.select('.bar').style('width'))
@@ -165,39 +166,43 @@ function drawBarChart () {
   const text = d3.selectAll('text')
     .style('font-size', '14px')
   // 新增tooltips
-  const tooltips = d3.select('.barChart').append('div')
-    .attr('class', 'tooltip')
+  const tooltips = d3.select('.bar').append('div')
+    .attr('class', 'tooltips')
     .style('position', 'absolute')
     .style('visibility', 'hidden') // 一開始tooltips是隱藏的
     .style('background-color', 'rgba(78, 67, 118, 1)')
     .style('color', '#fff')
     .style('padding', '12px 16px')
+    .style('z-index', '10')
   bar.on('mouseover', handleMouseOver)
     .on('mouseleave', handleMouseLeave)
 
   function handleMouseOver (d, i) {
+    d3.select(this).style('opacity', '0.7')
     tooltips.style('visibility', 'visible')
       .style('bottom', 100 + 'px')
       .style('left', xScale(i['行政區別'].trim()) - 40 + 'px')
       .html(`<p>${i['行政區別'].trim()}得票數</p>
-             <p>A候選人　　${i['宋楚瑜/余湘']}票</p>
-             <p>B候選人　　${i['韓國瑜/張善政']}票</p>
-             <p>C候選人　　${i['蔡英文/賴清德']}票</p>
+             <p>新世代改革黨　${i.no1}票</p>
+             <p>未來前進黨　　${i.no2}票</p>
+             <p>星際和平黨　　${i.no3}票</p>
             `)
-    d3.selectAll('.tooltip p')
+    d3.selectAll('.tooltips p')
       .style('font-size', '14px')
       .style('margin', '4px')
   }
 
   function handleMouseLeave () {
     // 移除文字
-    d3.select('.tooltip').style('visibility', 'hidden')
+    d3.select(this).style('opacity', '1')
+    d3.select('.tooltips').style('visibility', 'hidden')
   }
 }
 
 // 4.投票率長條圖
 function drawVoteBarChart () {
   d3.select('.voteBar svg').remove()
+  d3.select('.voteBar .tooltip2').remove()
   d3.select('.voteBar').style('position', 'relative')
   // 設定rwd寬高
   const svgW = parseInt(d3.select('.voteBar').style('width'))
@@ -262,8 +267,8 @@ function drawVoteBarChart () {
   const text = d3.selectAll('text')
     .style('font-size', '14px')
   // 新增tooltips
-  const tooltips = d3.select('.barChart').append('div')
-    .attr('class', 'tooltip')
+  const tooltips = d3.select('.voteBar').append('div')
+    .attr('class', 'tooltip2')
     .style('position', 'absolute')
     .style('visibility', 'hidden') // 一開始tooltips是隱藏的
     .style('background-color', 'rgba(78, 67, 118, 1)')
@@ -273,22 +278,24 @@ function drawVoteBarChart () {
     .on('mouseleave', handleMouseLeave)
 
   function handleMouseOver (d, i) {
+    d3.select(this).style('opacity', '0.7')
     tooltips.style('visibility', 'visible')
       .style('bottom', 100 + 'px')
-      .style('left', xScale(i['行政區別'].trim()) - 40 + 'px')
-      .html(`<p>${i['行政區別'].trim()}得票數</p>
-             <p>A候選人　　${i['宋楚瑜/余湘']}票</p>
-             <p>B候選人　　${i['韓國瑜/張善政']}票</p>
-             <p>C候選人　　${i['蔡英文/賴清德']}票</p>
+      .style('left', xScale(i.city.trim()) - 40 + 'px')
+      .html(`<p>${i.city.trim()}投票率</p>
+             <p>2012　　${i['2012voterate']}%</p>
+             <p>2016　　${i['2016voterate']}%</p>
+             <p>2020　　${i['2020voterate']}%</p>
             `)
-    d3.selectAll('.tooltip p')
+    d3.selectAll('.tooltip2 p')
       .style('font-size', '14px')
       .style('margin', '4px')
   }
 
   function handleMouseLeave () {
     // 移除文字
-    d3.select('.tooltip').style('visibility', 'hidden')
+    d3.select(this).style('opacity', '1')
+    d3.select('.tooltip2').style('visibility', 'hidden')
   }
 }
 </script>
