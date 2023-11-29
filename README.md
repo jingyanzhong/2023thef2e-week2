@@ -1,35 +1,18 @@
-# 2023thef2e-week2
+![image](https://images.thef2e.com//works/450_2023-11-19T06:30:29.164Z.jpeg)
+# 2023 THE F2E 總統即時開票地圖
+菜鳥前端工程師的修練之路  
+要先謝謝Mina大大提供的設計稿:D  
+  
+在製作這次的題目前，大約花了一個禮拜的時間去了解D3.js的基本應用，主要是從iT邦幫忙的鐵人賽「三十天成為D3.js v7 好手系列」去學習，如果跟我一樣也是新手的很推薦看這系列文章，內文說明的很詳細，也很容易理解。  
+雖然目前只理解了基本用法，但未來會再慢慢研究D3的其他功能，在圖表製作上真的是滿好使用的。  
+也很謝謝六角學院每年都舉辦練功活動，讓不管是新手或是老手都有學習新技術的機會。  
+尤其新手真的很需要多多練習技能啊!!!  
+希望這個活動可以一直持續下去，未來也會再繼續參加的!  
+  
+__本次使用到的技術 :__  
+‧vue3  
+‧vite  
+‧scss   
 
-This template should help get you started developing with Vue 3 in Vite.
-
-## Recommended IDE Setup
-
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+__運用的js plugins：__  
+‧D3.js
