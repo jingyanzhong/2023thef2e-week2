@@ -9,21 +9,26 @@ onMounted(() => {
   window.onresize = () => {
     drawPieChart()
     drawBarChart()
+    drawVoteBarChart()
   }
 })
 const allData = ref([])
 const data = ref([])
+const voteRate = ref([])
 // 圓餅圖
 // 1.取得data
 async function getData () {
   const csvData = await d3.csv('./totalData.csv')
+  const voteRateData = await d3.csv('./voteRate.csv')
   allData.value = csvData
-  console.log(allData.value)
+  voteRate.value = voteRateData
+  console.log(voteRate.value)
   data.value.push(100 - parseInt(csvData[0]['投票率']))
   data.value.push(parseInt(csvData[0]['投票率']))
   console.log(data.value)
   drawPieChart()
   drawBarChart()
+  drawVoteBarChart()
 }
 // 2.畫圓餅圖
 function drawPieChart () {
@@ -182,6 +187,106 @@ function drawBarChart () {
     d3.select('.tooltip').style('visibility', 'hidden')
   }
 }
+
+// 4.投票率長條圖
+function drawVoteBarChart () {
+  d3.select('.voteBar svg').remove()
+  d3.select('.voteBar').style('position', 'relative')
+  // 設定rwd寬高
+  const svgW = parseInt(d3.select('.voteBar').style('width'))
+  const svgH = parseInt(d3.select('.voteBar').style('height'))
+  const margin = 35
+  const marginB = 40
+  const svg = d3.select('.voteBar').append('svg')
+    .attr('width', svgW)
+    .attr('height', svgH)
+
+  // 製作XY軸
+  const xData = voteRate.value.map(i => i.city)
+  const xScale = d3.scaleBand()
+    .domain(xData)
+    .range([(margin * 2), (svgW - margin)])
+    .padding(0.1)
+  const xAxis = d3.axisBottom(xScale)
+  const xAxisGroup = svg.append('g')
+    .call(xAxis)
+    .attr('transform', `translate(0, ${svgH - marginB})`)
+    .attr('color', '#fff')
+
+  const yScale = d3.scaleLinear()
+    .domain([0, 100])
+    .range([svgH - marginB, margin])
+    .nice()
+  const yAxis = d3.axisLeft(yScale).ticks(5)
+    .tickFormat(function (d) { return d + '%' })
+  const yAxisGroup = svg.append('g').call(yAxis)
+    .attr('transform', `translate(${margin * 2}, 0)`)
+    .attr('color', '#fff')
+  const subgroups = Object.keys(voteRate.value[0]).slice(1)
+  console.log(subgroups)
+  const xSubgroups = d3.scaleBand()
+    .domain(subgroups)
+    .range([0, xScale.bandwidth()])
+    .padding([0.1])
+  const color = d3.scaleOrdinal()
+    .domain(subgroups)
+    .range(['#65a5d0', '#85618b', '#9b8dcd'])
+  const bar = svg.append('g')
+    .selectAll('g')
+    .data(voteRate.value)
+    .join('g')
+    .attr('transform', d => `translate(${xScale(d.city)}, 0)`)
+
+  bar.selectAll('rect')
+    .data(d => {
+      //   console.log(d)
+      return subgroups.map(i => {
+        return { key: i, value: d[i] }
+      })
+    })
+    .join('rect')
+    .attr('x', d => xSubgroups(d.key))
+    .attr('y', d => yScale(d.value.split(',').join('')))
+    .attr('width', xSubgroups.bandwidth())
+    .attr('height', d => {
+      console.log(yScale(parseInt(d.value)))
+      return (svgH - marginB) - yScale(parseInt(d.value))
+    })
+    .attr('fill', d => color(d.key))
+    .style('cursor', 'pointer')
+
+  const text = d3.selectAll('text')
+    .style('font-size', '14px')
+  // 新增tooltips
+  const tooltips = d3.select('.barChart').append('div')
+    .attr('class', 'tooltip')
+    .style('position', 'absolute')
+    .style('visibility', 'hidden') // 一開始tooltips是隱藏的
+    .style('background-color', 'rgba(78, 67, 118, 1)')
+    .style('color', '#fff')
+    .style('padding', '12px 16px')
+  bar.on('mouseover', handleMouseOver)
+    .on('mouseleave', handleMouseLeave)
+
+  function handleMouseOver (d, i) {
+    tooltips.style('visibility', 'visible')
+      .style('bottom', 100 + 'px')
+      .style('left', xScale(i['行政區別'].trim()) - 40 + 'px')
+      .html(`<p>${i['行政區別'].trim()}得票數</p>
+             <p>A候選人　　${i['(1)宋楚瑜_余湘']}票</p>
+             <p>B候選人　　${i['(2)韓國瑜_張善政']}票</p>
+             <p>C候選人　　${i['(3)蔡英文_賴清德']}票</p>
+            `)
+    d3.selectAll('.tooltip p')
+      .style('font-size', '14px')
+      .style('margin', '4px')
+  }
+
+  function handleMouseLeave () {
+    // 移除文字
+    d3.select('.tooltip').style('visibility', 'hidden')
+  }
+}
 </script>
 
 <template>
@@ -244,7 +349,20 @@ function drawBarChart () {
           </div>
         </div>
         <div class="hr"></div>
-        <div class="barChart2"></div>
+        <div class="barChart2">
+          <h4>各縣市歷屆投票率變化</h4>
+          <div class="flex">
+            <div class="barScroll">
+              <div class="voteBar"></div>
+            </div>
+            <div class="voteBarTag">
+              <img src="./img/icon1.png" alt="icon2">
+              <div class="tag">2012</div>
+              <div class="tag">2016</div>
+              <div class="tag">2020</div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
     <!-- <RouterView /> -->
@@ -252,6 +370,54 @@ function drawBarChart () {
 </template>
 
 <style lang="scss" scoped>
+h4 {
+  font-size: 32px;
+  color: #fff;
+  margin-bottom: 40px;
+}
+
+.barScroll {
+  width: 100%;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+
+    width: 7px;
+
+  }
+
+  &::-webkit-scrollbar-button {
+
+    background: transparent;
+
+    border-radius: 4px;
+
+  }
+
+  &::-webkit-scrollbar-track-piece {
+
+    background: rgba(217, 217, 217, 1);
+    border-radius: 8px;
+
+  }
+
+  &::-webkit-scrollbar-thumb {
+
+    border-radius: 16px;
+    background-color: rgba(78, 67, 118, 1);
+    position: relative;
+
+    // border: 1px solid slategrey;
+
+  }
+
+  &::-webkit-scrollbar-track {
+
+    box-shadow: transparent;
+
+  }
+}
+
 .hr {
   width: 100%;
   height: 1px;
@@ -262,7 +428,57 @@ function drawBarChart () {
 
 .barChart2 {
   width: 100%;
-  height: 500px;
+  padding-bottom: 60px;
+
+  .flex {
+    display: flex;
+    align-items: end;
+  }
+
+  .barScroll {
+    width: 80%;
+  }
+
+  .voteBar {
+    width: 200%;
+    height: 442px;
+  }
+
+  h4 {
+    margin-left: 240px;
+  }
+
+  .voteBarTag {
+    margin-left: 60px;
+    margin-bottom: 60px;
+
+    img {
+      margin: 0;
+      margin-bottom: 100px;
+      margin-left: 96px;
+    }
+
+    .tag {
+      max-width: 108px;
+      width: 100%;
+      text-align: center;
+      padding: 8px 36px;
+      color: #fff;
+      margin-top: 16px;
+
+      &:nth-of-type(1) {
+        background: #65a5d0;
+      }
+
+      &:nth-of-type(2) {
+        background: #85618b;
+      }
+
+      &:nth-of-type(3) {
+        background: #9b8dcd;
+      }
+    }
+  }
 }
 
 .stackBar {
@@ -270,17 +486,21 @@ function drawBarChart () {
   height: 64px;
   width: 100%;
   margin-bottom: 74px;
+
   .barBox {
     padding: 8px;
     color: #fff;
+
     &:nth-of-type(1) {
       width: 40%;
       background: linear-gradient(86.8deg, #C857A3 2.93%, rgba(188, 143, 174, 0) 191.01%);
     }
+
     &:nth-of-type(2) {
       width: 35%;
       background: linear-gradient(86.18deg, #08C0BE 1.78%, rgba(200, 240, 240, 0) 122.05%);
     }
+
     &:nth-of-type(3) {
       width: 25%;
       background: linear-gradient(89.28deg, #AD8427 0.74%, rgba(252, 238, 207, 0) 162.36%);
@@ -317,12 +537,6 @@ function drawBarChart () {
   .pie {
     width: 55%;
 
-    h4 {
-      font-size: 32px;
-      color: #fff;
-      margin-bottom: 40px;
-    }
-
     .pieChart {
       width: 100%;
       display: flex;
@@ -352,6 +566,37 @@ function drawBarChart () {
       margin-bottom: 24px;
     }
   }
+
+  .barChart2 {
+
+    .barScroll {
+      width: 85%;
+    }
+
+    .voteBar {
+      width: 400%;
+    }
+
+    h4 {
+      text-align: center;
+      margin-left: 0;
+    }
+
+    .voteBarTag {
+      margin-left: 60px;
+      margin-bottom: 60px;
+
+      img {
+        width: 150px;
+        margin-bottom: 100px;
+        margin-left: 36px;
+      }
+
+      .tag {
+        padding: 8px 16px;
+      }
+    }
+  }
 }
 
 .barChart {
@@ -362,8 +607,6 @@ function drawBarChart () {
   h4 {
     display: flex;
     align-items: end;
-    color: #fff;
-    font-size: 32px;
     margin: 0;
   }
 
@@ -402,48 +645,6 @@ function drawBarChart () {
     }
   }
 
-  .barScroll {
-    width: 100%;
-    overflow-x: auto;
-
-    &::-webkit-scrollbar {
-
-      width: 7px;
-
-    }
-
-    &::-webkit-scrollbar-button {
-
-      background: transparent;
-
-      border-radius: 4px;
-
-    }
-
-    &::-webkit-scrollbar-track-piece {
-
-      background: rgba(217, 217, 217, 1);
-      border-radius: 8px;
-
-    }
-
-    &::-webkit-scrollbar-thumb {
-
-      border-radius: 16px;
-      background-color: rgba(78, 67, 118, 1);
-      position: relative;
-
-      // border: 1px solid slategrey;
-
-    }
-
-    &::-webkit-scrollbar-track {
-
-      box-shadow: transparent;
-
-    }
-  }
-
   .bar {
     width: 200%;
     height: 312px;
@@ -476,10 +677,14 @@ function drawBarChart () {
 @media(max-width: 767px) {
   .barChart {
     justify-content: center;
+    .barTag {
+      margin-right: 0;
+    }
     h4 {
       margin-top: 24px;
     }
   }
+
   .taiwanMap {
     display: none;
   }
@@ -501,4 +706,55 @@ function drawBarChart () {
       }
     }
   }
-}</style>
+
+  .barChart2 {
+    .flex {
+      flex-direction: column;
+      align-items: start;
+    }
+
+    .barScroll {
+      width: 100%;
+    }
+
+    .voteBar {
+      width: 500%;
+    }
+
+    h4 {
+      text-align: center;
+      margin-left: 0;
+      margin-bottom: 24px;
+    }
+
+    .voteBarTag {
+      display: flex;
+      margin: 0;
+      margin-top: 24px;
+
+      img {
+        display: none;
+      }
+
+      .tag {
+        margin-right: 16px;
+      }
+    }
+  }
+
+  .stackBar {
+    flex-direction: column;
+    height: auto;
+    margin-bottom: 48px;
+
+    .barBox {
+      padding: 8px;
+      color: #fff;
+
+      &:nth-of-type(1), &:nth-of-type(2), &:nth-of-type(3) {
+        width: 100%;
+      }
+    }
+  }
+}
+</style>
