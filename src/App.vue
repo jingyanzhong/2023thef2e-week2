@@ -24,8 +24,8 @@ const voteRate = ref([])
 // 1.取得data
 async function getData () {
   data.value = []
-  const csvData = await d3.csv(`/${year.value}totalData.csv`)
-  const voteRateData = await d3.csv('/voteRate.csv')
+  const csvData = await d3.csv(`./${year.value}totalData.csv`)
+  const voteRateData = await d3.csv('./voteRate.csv')
   allData.value = csvData
   voteRate.value = voteRateData
   data.value.push(100 - parseInt(csvData[0]['投票率']))
