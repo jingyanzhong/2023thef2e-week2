@@ -3,6 +3,7 @@ import * as d3 from 'd3'
 import { ref, onMounted } from 'vue'
 import HeaderComponent from './components/HeaderComponent.vue'
 import SearchComponent from './components/searchComponent.vue'
+import taiwanMap from './components/TaiwanMap.vue'
 onMounted(() => {
   getData()
   window.onresize = () => {
@@ -20,6 +21,7 @@ function getEmit (text) {
 const allData = ref([])
 const data = ref([])
 const voteRate = ref([])
+const heightTotal = ref([])
 // 圓餅圖
 // 1.取得data
 async function getData () {
@@ -36,6 +38,27 @@ async function getData () {
     valid: csvData[0]['有效票數'],
     invalid: csvData[0]['無效票數']
   }
+  allData.value.reduce((a, c, i, arr) => {
+    if (parseInt((c.no1).split(',').join('')) > parseInt((c.no2).split(',').join('')) && parseInt((c.no1).split(',').join('')) > parseInt((c.no3).split(',').join(''))) {
+      heightTotal.value.push({
+        city: c['行政區別'].trim(),
+        elected: 'no1',
+        color: '#08C0BE'
+      })
+    } else if (parseInt((c.no2).split(',').join('')) > parseInt((c.no1).split(',').join('')) && parseInt((c.no2).split(',').join('')) > parseInt((c.no3).split(',').join(''))) {
+      heightTotal.value.push({
+        city: c['行政區別'].trim(),
+        elected: 'no2',
+        color: '#E756B8'
+      })
+    } else if ((parseInt((c.no3).split(',').join('')) > parseInt((c.no1).split(',').join('')) && parseInt((c.no3).split(',').join('')) > parseInt((c.no2).split(',').join('')))) {
+      heightTotal.value.push({
+        city: c['行政區別'].trim(),
+        elected: 'no3',
+        color: '#B4A073'
+      })
+    }
+  })
   drawPieChart()
   drawBarChart()
   drawVoteBarChart()
@@ -81,6 +104,14 @@ function drawPieChart () {
     .attr('d', arc)
     .attr('fill', color)
     .style('opacity', 1)
+    .transition()
+    .duration(2000)
+    .attrTween('d', b => {
+      b.innerRadius = 0
+      const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, b)
+      return function (t) { return arc(i(t)) }
+    })
+  // .transition()
 }
 
 // 3.複數長條圖
@@ -140,7 +171,7 @@ function drawBarChart () {
     .padding([0.1])
   const color = d3.scaleOrdinal()
     .domain(subgroupsFilter)
-    .range(['#B4A073', '#08C0BE', '#E756B8'])
+    .range(['#08C0BE', '#E756B8', '#B4A073'])
   const bar = svg.append('g')
     .selectAll('g')
     .data(dataFilter)
@@ -155,8 +186,12 @@ function drawBarChart () {
     })
     .join('rect')
     .attr('x', d => xSubgroups(d.key))
-    .attr('y', d => yScale(d.value.split(',').join('')))
+    .attr('y', yScale(0))
     .attr('width', xSubgroups.bandwidth())
+    .transition()
+    .duration(1000)
+    .delay((d, i) => i * 100)
+    .attr('y', d => yScale(d.value.split(',').join('')))
     .attr('height', d => {
       return (svgH - marginB) - yScale(parseInt(d.value.split(',').join('')))
     })
@@ -256,8 +291,12 @@ function drawVoteBarChart () {
     })
     .join('rect')
     .attr('x', d => xSubgroups(d.key))
-    .attr('y', d => yScale(d.value.split(',').join('')))
+    .attr('y', yScale(0))
     .attr('width', xSubgroups.bandwidth())
+    .transition()
+    .duration(1000)
+    .delay((d, i) => i * 100)
+    .attr('y', d => yScale(d.value.split(',').join('')))
     .attr('height', d => {
       return (svgH - marginB) - yScale(parseInt(d.value))
     })
@@ -335,19 +374,22 @@ function drawVoteBarChart () {
                     <p>無效票數</p>
                   </div>
                   <div class="value">
-                    <p>{{textContent.voteRate}} %</p>
-                    <p>{{textContent.voteTotal}}</p>
-                    <p>{{textContent.valid}}</p>
-                    <p>{{textContent.invalid}}</p>
+                    <p>{{ textContent.voteRate }} %</p>
+                    <p>{{ textContent.voteTotal }}</p>
+                    <p>{{ textContent.valid }}</p>
+                    <p>{{ textContent.invalid }}</p>
                   </div>
                 </div>
               </div>
             </div>
             <div class="barChart">
               <div class="barTag">
-                <div class="tag"><img src="./img/01.png" alt="">新世代改革黨</div>
-                <div class="tag"><img src="./img/02.png" alt="">未來前進黨</div>
-                <div class="tag"><img src="./img/03.png" alt="">星際和平黨</div>
+                <div class="tagGroups">
+                  <div class="tag"><img src="./img/01.png" alt="">新世代改革黨</div>
+                  <div class="tag"><img src="./img/02.png" alt="">未來前進黨</div>
+                  <div class="tag"><img src="./img/03.png" alt="">星際和平黨</div>
+                </div>
+                <img src="./img/icon1.png" alt="icon2">
               </div>
               <h4>各縣市政黨得票數</h4>
               <div class="barScroll">
@@ -355,9 +397,7 @@ function drawVoteBarChart () {
               </div>
             </div>
           </div>
-          <div class="taiwanMap">
-            <img src="./img/taiwan.png" alt="台灣">
-          </div>
+          <taiwanMap :colorData="heightTotal"></taiwanMap>
         </div>
         <div class="hr"></div>
         <div class="barChart2">
@@ -390,42 +430,30 @@ h4 {
 .barScroll {
   width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
 
   &::-webkit-scrollbar {
-
     width: 7px;
-
   }
 
   &::-webkit-scrollbar-button {
-
     background: transparent;
-
     border-radius: 4px;
-
   }
 
   &::-webkit-scrollbar-track-piece {
-
     background: rgba(217, 217, 217, 1);
-    border-radius: 8px;
-
+    border-radius: 20px;
   }
 
   &::-webkit-scrollbar-thumb {
-
     border-radius: 16px;
     background-color: rgba(78, 67, 118, 1);
     position: relative;
-
-    // border: 1px solid slategrey;
-
   }
 
   &::-webkit-scrollbar-track {
-
     box-shadow: transparent;
-
   }
 }
 
@@ -435,6 +463,63 @@ h4 {
   background: #fff;
   margin-top: 64px;
   margin-bottom: 40px;
+}
+
+.barChart {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+
+  h4 {
+    display: flex;
+    align-items: end;
+    margin: 0;
+  }
+
+  .barTag {
+    display: flex;
+    max-width: 170px;
+    width: 100%;
+    margin-right: 75px;
+
+    &>img {
+      display: none;
+    }
+
+    .tag {
+      display: flex;
+      align-items: center;
+      height: 40px;
+      color: #fff;
+      margin-bottom: 8px;
+      font-size: 20px;
+      padding: 8px;
+
+      img {
+        display: inline;
+        margin: 0;
+        margin-right: 8px;
+      }
+
+      &:nth-of-type(1) {
+        background: linear-gradient(86.18deg, #08C0BE 1.78%, rgba(200, 240, 240, 0) 122.05%);
+      }
+
+      &:nth-of-type(2) {
+        background: linear-gradient(86.8deg, #C857A3 2.93%, rgba(188, 143, 174, 0) 191.01%);
+      }
+
+      &:nth-of-type(3) {
+        background: linear-gradient(89.28deg, #AD8427 0.74%, rgba(252, 238, 207, 0) 162.36%);
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .bar {
+    width: 200%;
+    height: 312px;
+  }
 }
 
 .barChart2 {
@@ -448,6 +533,7 @@ h4 {
 
   .barScroll {
     width: 80%;
+    overflow-y: hidden;
   }
 
   .voteBar {
@@ -567,6 +653,17 @@ h4 {
 }
 
 @media(max-width: 768px) {
+  .barChart {
+    .bar {
+      width: 300%;
+      height: 312px;
+    }
+
+    .barTag {
+      margin-right: 48px;
+    }
+  }
+
   .chartContent {
     .icon {
       display: none;
@@ -610,94 +707,27 @@ h4 {
   }
 }
 
-.barChart {
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-
-  h4 {
-    display: flex;
-    align-items: end;
-    margin: 0;
-  }
-
-  .barTag {
-    max-width: 170px;
-    width: 100%;
-    margin-right: 75px;
-
-    img {
-      display: inline;
-      margin: 0;
-      margin-right: 8px;
-    }
-
-    .tag {
-      display: flex;
-      align-items: center;
-      height: 40px;
-      color: #fff;
-      margin-bottom: 8px;
-      font-size: 20px;
-      padding: 8px;
-
-      &:nth-of-type(1) {
-        background: linear-gradient(86.18deg, #08C0BE 1.78%, rgba(200, 240, 240, 0) 122.05%);
-      }
-
-      &:nth-of-type(2) {
-        background: linear-gradient(86.8deg, #C857A3 2.93%, rgba(188, 143, 174, 0) 191.01%);
-      }
-
-      &:nth-of-type(3) {
-        background: linear-gradient(89.28deg, #AD8427 0.74%, rgba(252, 238, 207, 0) 162.36%);
-        margin-bottom: 0;
-      }
-    }
-  }
-
-  .bar {
-    width: 200%;
-    height: 312px;
-  }
-}
-
-.taiwanMap {
-  width: 35%;
-
-  img {
-    width: 100%;
-    max-width: 552px;
-    margin: 0;
-  }
-}
-
-@media(max-width: 768px) {
-  .barChart {
-    .bar {
-      width: 300%;
-      height: 312px;
-    }
-
-    .barTag {
-      margin-right: 48px;
-    }
-  }
-}
-
 @media(max-width: 767px) {
   .barChart {
     justify-content: center;
+
     .barTag {
+      max-width: 100%;
       margin-right: 0;
+      justify-content: space-between;
+      align-items: center;
+
+      &>img {
+        width: 120px;
+        height: 120px;
+        display: block;
+        margin: 0;
+      }
     }
+
     h4 {
       margin-top: 24px;
     }
-  }
-
-  .taiwanMap {
-    display: none;
   }
 
   .chartContent {
@@ -762,7 +792,9 @@ h4 {
       padding: 8px;
       color: #fff;
 
-      &:nth-of-type(1), &:nth-of-type(2), &:nth-of-type(3) {
+      &:nth-of-type(1),
+      &:nth-of-type(2),
+      &:nth-of-type(3) {
         width: 100%;
       }
     }
