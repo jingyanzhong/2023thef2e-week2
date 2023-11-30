@@ -11,7 +11,7 @@ onMounted(() => {
 const props = defineProps(['colorData'])
 const mapData = ref([])
 async function getData () {
-  const getData = await d3.json('../taiwanMap01.json').then((data) => {
+  const getData = await d3.json('./taiwanMap01.json').then((data) => {
     const counties = topojson.feature(data, data.objects.COUNTY_MOI_1090820)
     mapData.value = counties
   })
