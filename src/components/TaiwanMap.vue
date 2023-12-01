@@ -42,7 +42,6 @@ function drawTaiwanMap () {
     .attr('stroke-width', '1px')
     .style('cursor', 'pointer')
     .on('mouseover', function (e, i) {
-      console.log(e)
       d3.select(this).style('opacity', '0.8')
       tooltips.style('visibility', 'visible')
       tooltips.style('left', e.layerX + 20 + 'px')

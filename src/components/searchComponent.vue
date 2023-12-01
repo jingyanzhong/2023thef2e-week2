@@ -1,10 +1,15 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 const searchValue = ref('all')
 const county = ref('縣市')
 const countyShow = ref(false)
 const town = ref('鄉鎮')
 const townShow = ref(false)
+const props = defineProps(['cityData'])
+const cityData = ref([])
+watch(() => props.cityData, (n) => {
+  cityData.value = n
+}, { deep: true })
 function searchContentShow (val) {
   if (val === 'county') {
     countyShow.value = !countyShow.value
@@ -38,13 +43,9 @@ function searchChange (val) {
             <button type="button" class="county btn btn-outline-white" @click="searchContentShow('county')">{{ county
             }}</button>
             <div class="countyBtnContent" :class="{ 'show': countyShow === true, 'none': countyShow === false }">
-                <label @click="searchChange('county')">
-                    <input type="radio" name="county" value="台北市" v-model="county">
-                    <span>台北市</span>
-                </label>
-                <label @click="searchChange('county')">
-                    <input type="radio" name="county" value="新北市" v-model="county">
-                    <span>新北市</span>
+                <label v-for="item in cityData" :key="item.city" @click="searchChange('county')">
+                    <input type="radio" name="county" :value="item.city" v-model="county">
+                    <span>{{item.city}}</span>
                 </label>
             </div>
         </div>
@@ -88,10 +89,12 @@ function searchChange (val) {
 .townBtnContent {
     max-width: 255px;
     width: 100%;
+    max-height: 500px;
+    overflow-y: auto;
     border: 3px solid #fff;
     border-radius: 16px;
     color: #fff;
-    background: rgba(78, 67, 118, 1);
+    background: rgba(43, 88, 118, 1);
     font-size: 24px;
     padding: 16px 0;
     position: absolute;
@@ -113,6 +116,29 @@ function searchChange (val) {
         &:hover {
             background: rgba(255, 255, 255, .5);
         }
+    }
+    &::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    &::-webkit-scrollbar-button {
+      background: transparent;
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-track-piece {
+      background: rgba(217, 217, 217, 1);
+      border-radius: 20px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 16px;
+      background-color: rgb(77, 131, 167);
+      position: relative;
+    }
+
+    &::-webkit-scrollbar-track {
+      box-shadow: transparent;
     }
 }
 

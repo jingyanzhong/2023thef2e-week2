@@ -1,5 +1,5 @@
 <script setup>
-import { ref, defineEmits } from 'vue'
+import { ref } from 'vue'
 const text = ref(15)
 const year = ref(2020)
 const emit = defineEmits(['get-year'])

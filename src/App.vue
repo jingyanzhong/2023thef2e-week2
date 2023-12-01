@@ -27,7 +27,6 @@ async function getData () {
   voteRate.value = voteRateData
   data.value.push(100 - parseInt(csvData[0]['投票率']))
   data.value.push(parseInt(csvData[0]['投票率']))
-
   allData.value.reduce((a, c, i, arr) => {
     if (parseInt((c.no1).split(',').join('')) > parseInt((c.no2).split(',').join('')) && parseInt((c.no1).split(',').join('')) > parseInt((c.no3).split(',').join(''))) {
       heightTotal.value.push({
@@ -58,7 +57,7 @@ async function getData () {
     <HeaderComponent @get-year="getEmit"></HeaderComponent>
     <main>
       <div class="container">
-        <SearchComponent></SearchComponent>
+        <SearchComponent :city-data="voteRate"></SearchComponent>
         <div class="stackBar">
           <div class="barBox">
             <span>朱筱雀/劉貝<br>7,111,222票</span>
