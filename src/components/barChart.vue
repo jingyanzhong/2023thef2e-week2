@@ -1,6 +1,6 @@
 <script setup>
 import * as d3 from 'd3'
-import { ref, onMounted, defineProps, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 
 const allData = ref([])
 const props = defineProps(['all-data'])

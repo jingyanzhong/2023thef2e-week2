@@ -1,7 +1,7 @@
 <script setup>
 import * as d3 from 'd3'
 import * as topojson from 'topojson-client'
-import { ref, onMounted, defineProps } from 'vue'
+import { ref, onMounted } from 'vue'
 onMounted(() => {
   getData()
   window.onresize = () => {
@@ -41,6 +41,18 @@ function drawTaiwanMap () {
     .style('stroke', '#fff')
     .attr('stroke-width', '1px')
     .style('cursor', 'pointer')
+    .on('mouseover', function (e, i) {
+      console.log(e)
+      d3.select(this).style('opacity', '0.8')
+      tooltips.style('visibility', 'visible')
+      tooltips.style('left', e.layerX + 20 + 'px')
+      tooltips.style('top', e.layerY + 'px')
+        .html(`<p>${i.properties.COUNTYNAME}</p>`)
+    })
+    .on('mouseleave', function (e) {
+      d3.select(this).style('opacity', '1')
+      tooltips.style('visibility', 'hidden')
+    })
 
   // 新增tooltips
   const tooltips = d3.select('.taiwanMap').append('div')
@@ -48,19 +60,7 @@ function drawTaiwanMap () {
     .style('position', 'absolute')
     .style('visibility', 'hidden') // 一開始tooltips是隱藏的
     .style('color', '#fff')
-    .style('padding', '12px 16px')
-
-  geoPath.on('mouseover', function (e, i) {
-    d3.select(this).style('opacity', '0.8')
-    tooltips.style('visibility', 'visible')
-    tooltips.style('left', e.layerX + 'px')
-    tooltips.style('top', e.layerY + 'px')
-      .html(`<p>${i.properties.COUNTYNAME}</p>`)
-  })
-    .on('mouseleave', function (e) {
-      d3.select(this).style('opacity', '1')
-      tooltips.style('visibility', 'hidden')
-    })
+    // .style('padding', '12px 16px')
 }
 // 區域顏色
 const areaColor = (city) => {
