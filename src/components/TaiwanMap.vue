@@ -49,6 +49,7 @@ function drawTaiwanMap () {
     .style('visibility', 'hidden') // 一開始tooltips是隱藏的
     .style('color', '#fff')
     .style('padding', '12px 16px')
+
   geoPath.on('mouseover', function (e, i) {
     d3.select(this).style('opacity', '0.8')
     tooltips.style('visibility', 'visible')

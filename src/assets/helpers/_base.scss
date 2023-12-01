@@ -20,7 +20,11 @@ img {
     margin: 100%;
     height: auto;
 }
-
+h4 {
+    font-size: 32px;
+    color: #fff;
+    margin-bottom: 40px;
+}
 .btn-outline-white {
     width: 255px;
     border: 3px solid #fff;
@@ -50,7 +54,35 @@ img {
 .none {
     display: none;
 }
-
+.barScroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  
+    &::-webkit-scrollbar {
+      width: 7px;
+    }
+  
+    &::-webkit-scrollbar-button {
+      background: transparent;
+      border-radius: 4px;
+    }
+  
+    &::-webkit-scrollbar-track-piece {
+      background: rgba(217, 217, 217, 1);
+      border-radius: 20px;
+    }
+  
+    &::-webkit-scrollbar-thumb {
+      border-radius: 16px;
+      background-color: rgba(78, 67, 118, 1);
+      position: relative;
+    }
+  
+    &::-webkit-scrollbar-track {
+      box-shadow: transparent;
+    }
+  }
 @media(max-width: 768px) {
 
 }

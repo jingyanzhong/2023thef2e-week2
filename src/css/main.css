@@ -12168,6 +12168,12 @@ img {
   height: auto;
 }
 
+h4, .h4 {
+  font-size: 32px;
+  color: #fff;
+  margin-bottom: 40px;
+}
+
 .btn-outline-white {
   width: 255px;
   border: 3px solid #fff;
@@ -12194,6 +12200,31 @@ img {
 
 .none {
   display: none;
+}
+
+.barScroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.barScroll::-webkit-scrollbar {
+  width: 7px;
+}
+.barScroll::-webkit-scrollbar-button {
+  background: transparent;
+  border-radius: 4px;
+}
+.barScroll::-webkit-scrollbar-track-piece {
+  background: rgb(217, 217, 217);
+  border-radius: 20px;
+}
+.barScroll::-webkit-scrollbar-thumb {
+  border-radius: 16px;
+  background-color: rgb(78, 67, 118);
+  position: relative;
+}
+.barScroll::-webkit-scrollbar-track {
+  box-shadow: transparent;
 }
 
 @media (max-width: 767px) {
