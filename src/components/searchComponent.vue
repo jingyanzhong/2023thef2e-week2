@@ -174,6 +174,7 @@ function searchChange (val) {
 
     .countyBtnContent,
     .townBtnContent {
+        max-height: 250px;
         border: 1px solid #fff;
         font-size: 16px;
         padding: 8px 0;
